@@ -133,9 +133,3 @@ function integrateAllPartSheets() {
     
   return integratedSheet
 }
-
-function test() {
-  let result = splitMasterSheetByPrefecture()
-  
-  console.log(groups)
-}

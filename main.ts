@@ -143,8 +143,14 @@ function integrateAllPartSheets() {
   let headersRange = masterSheet.getRange(1, 1, 1, masterSheet.getLastColumn())
   headersRange.copyTo(integratedSheet.getRange(1, 1))
   
-  let rangeData = getPartSheets().reduce( (obj, sheet) => {  
+  let rangeData = getPartSheets().reduce( (obj, sheet: GoogleAppsScript.Spreadsheet.Sheet) => {  
     const range = sheet.getDataRange()
+
+    let filter = range.getFilter()
+    if (filter != null) {
+      filter.remove()
+    }
+
     const dataRange = range.offset(1, 0, range.getNumRows()-1)
     
     obj.totalNumRows += dataRange.getNumRows()

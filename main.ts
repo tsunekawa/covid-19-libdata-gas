@@ -1,5 +1,5 @@
 
-// 情報取得系関数 (誰でも実行可能)
+// 情報取得系関数
 
 function getSpreadsheet() {
   if (!this.spreadSheet) {
@@ -48,7 +48,7 @@ function groupRowsByPrefecture(sheet) {
   return groups
 }
 
-// 更新系の関数（管理者のみ実行可能)
+// 更新系の関数
 
 function createPrefectureSheet(name, rows) {
   const CODE_COLUMN_NAME = '市町村コード'

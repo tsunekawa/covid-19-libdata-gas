@@ -110,8 +110,9 @@ function splitMasterSheetByPrefecture(): GoogleAppsScript.Spreadsheet.Sheet[] {
   let masterHeader = masterSheet.getRange('1:1')
   let masterTable = masterSheet.getDataRange()
   let prefectureColumnIndex: number = masterHeader.getValues()[0].indexOf(PREFECTURE_LABEL) + 1
+  let masterData = masterSheet.getRange(2, prefectureColumnIndex, masterSheet.getLastRow() - 1)
 
-  let prefectureNames: string[] = Array.from(new Set(masterSheet.getRange(1, prefectureColumnIndex, masterSheet.getLastRow()).getValues().flat()))
+  let prefectureNames: string[] = Array.from(new Set(masterData.getValues().flat()))
 
   let prefectureSheets = prefectureNames.map((prefectureName: string): GoogleAppsScript.Spreadsheet.Sheet => {
     let filteredRange = filterSheetByPrefecture(masterTable, prefectureName)

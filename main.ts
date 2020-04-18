@@ -10,7 +10,7 @@ function getSpreadsheet() {
 }
 
 function getMasterSheet() {
-  const MASTER_SHEET_NAME = '全国調査（4月9日分）'
+  const MASTER_SHEET_NAME = PropertiesService.getScriptProperties().getProperty('MASTER_SHEET_NAME')
   
   if (!this.sheet) {
     this.sheet = getSpreadsheet().getSheetByName(MASTER_SHEET_NAME)
@@ -27,7 +27,7 @@ function getHeaders() {
 }
 
 function groupRowsByPrefecture(sheet) {
-  const PREFECTURE_LABEL = '都道府県'
+  const PREFECTURE_LABEL = PropertiesService.getScriptProperties().getProperty('PREFECTURE_LABEL') || '都道府県'
   
   let data = sheet.getDataRange().getValues()
   let headers = data.shift()
@@ -51,7 +51,7 @@ function groupRowsByPrefecture(sheet) {
 // 更新系の関数
 
 function createPrefectureSheet(name, rows) {
-  const CODE_COLUMN_NAME = '市町村コード'
+  const CODE_COLUMN_NAME = PropertiesService.getScriptProperties().getProperty('CODE_COLUMN_NAME') || '市町村コード'
   let sheetName = "分割_" + name
   let spreadSheet = getSpreadsheet()
   let headers = getHeaders()

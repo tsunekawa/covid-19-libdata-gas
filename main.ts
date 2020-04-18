@@ -9,8 +9,8 @@ function getSpreadsheet() {
   return this.spreadSheet
 }
 
-function getMasterSheet() {
-  const MASTER_SHEET_NAME = PropertiesService.getScriptProperties().getProperty('MASTER_SHEET_NAME')
+function getMasterSheet(): GoogleAppsScript.Spreadsheet.Sheet {
+  const MASTER_SHEET_NAME: string = PropertiesService.getScriptProperties().getProperty('MASTER_SHEET_NAME')
   
   if (!this.sheet) {
     this.sheet = getSpreadsheet().getSheetByName(MASTER_SHEET_NAME)
@@ -78,17 +78,47 @@ function createPrefectureSheet(name, rows) {
   return sheet
 }
 
-function splitMasterSheetByPrefecture() {
+function copyPrefectureSheet(name: string, sourceRange: GoogleAppsScript.Spreadsheet.Range) {
+  let sheetName = "分割_" + name
+  let spreadSheet = getSpreadsheet()
+  let sheet: GoogleAppsScript.Spreadsheet.Sheet = spreadSheet.insertSheet(sheetName)
+
+  sourceRange.copyTo(sheet.getRange(1, 1))
+  sheet.getDataRange().createFilter()
+  
+  return sheet
+}
+
+function filterSheetByPrefecture(dataRange: GoogleAppsScript.Spreadsheet.Range, prefectureName: string): GoogleAppsScript.Spreadsheet.Range {
+  const PREFECTURE_LABEL = PropertiesService.getScriptProperties().getProperty('PREFECTURE_LABEL') || '都道府県'
+  
+  let prefectureColumnIndex: number = dataRange.getValues()[0].indexOf(PREFECTURE_LABEL) + 1
+  
+  let filter = dataRange.getFilter() || dataRange.createFilter()
+  let criteria = SpreadsheetApp.newFilterCriteria().whenTextEqualTo(prefectureName).build()
+ 
+  filter.removeColumnFilterCriteria(prefectureColumnIndex)
+  filter.setColumnFilterCriteria(prefectureColumnIndex, criteria)
+
+  return dataRange
+}
+
+function splitMasterSheetByPrefecture(): GoogleAppsScript.Spreadsheet.Sheet[] {
+  const PREFECTURE_LABEL = PropertiesService.getScriptProperties().getProperty('PREFECTURE_LABEL') || '都道府県'
+
   let masterSheet = getMasterSheet()
-  let groups = groupRowsByPrefecture(masterSheet)
-  
-  let createdSheets = Object.entries(groups).map( (entry) => {
-    let name = entry[0]
-    let rows = entry[1]
-    return createPrefectureSheet(name, rows)
+  let masterHeader = masterSheet.getRange('1:1')
+  let masterTable = masterSheet.getDataRange()
+  let prefectureColumnIndex: number = masterHeader.getValues()[0].indexOf(PREFECTURE_LABEL) + 1
+
+  let prefectureNames: string[] = Array.from(new Set(masterSheet.getRange(1, prefectureColumnIndex, masterSheet.getLastRow()).getValues().flat()))
+
+  let prefectureSheets = prefectureNames.map((prefectureName: string): GoogleAppsScript.Spreadsheet.Sheet => {
+    let filteredRange = filterSheetByPrefecture(masterTable, prefectureName)
+    return copyPrefectureSheet(prefectureName, filteredRange)
   })
-  
-  return createdSheets
+
+  return prefectureSheets
 }
 
 function getPartSheets() {

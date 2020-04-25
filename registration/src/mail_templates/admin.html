@@ -1,0 +1,5 @@
+新たに以下の<?= registrants.length ?>件のGoogleアカウントを、全国図書館調査シートの編集者として承認しました。
+
+<? registrants.forEach( function (registrant) { ?>
+・ <?= registrant.name ?> ( <?= registrant.affiliation ?> ) : <?= registrant.email ?>
+<? }) ?>

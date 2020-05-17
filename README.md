@@ -20,8 +20,8 @@ saveMLAKが行う[covid-19の影響による図書館の動向調査](https://sa
 
 また、スクリプトの開発、デプロイには以下のミドルウェア、ライブラリが必要です。
 
-* Node.js ver.12.16.12
-* clasp ver.2.3.0
+* [Node.js](https://nodejs.org/ja/) ver.12.16.12
+* [clasp](https://codelabs.developers.google.com/codelabs/clasp/#0) ver.2.3.0
 
 ## 開発者
 * 常川真央 (Tsunekawa Mao)

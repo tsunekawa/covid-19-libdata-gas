@@ -40,28 +40,6 @@ function getHeaders() {
   return headers
 }
 
-function groupRowsByPrefecture(sheet) {
-  const PREFECTURE_LABEL = PropertiesService.getScriptProperties().getProperty('PREFECTURE_LABEL') || '都道府県'
-  
-  let data = sheet.getDataRange().getValues()
-  let headers = data.shift()
-  let prefectureColumnIndex = headers.indexOf(PREFECTURE_LABEL)
-  
-  let groups = data.map((rowValues) => {
-    return [rowValues[prefectureColumnIndex], rowValues]
-  }).reduce( (obj, entry) =>{
-    if (!Array.isArray(obj[entry[0]])) {
-      obj[entry[0]] = []
-    }
-    
-    obj[entry[0]].push(entry[1])
-    
-    return obj
-  }, {})
-  
-  return groups
-}
-
 // 更新系の関数
 
 function createPrefectureSheet(name, rows) {

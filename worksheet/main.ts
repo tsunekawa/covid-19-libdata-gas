@@ -114,7 +114,7 @@ function filterSheetByPrefecture(dataRange: GoogleAppsScript.Spreadsheet.Range, 
   filter.removeColumnFilterCriteria(prefectureColumnIndex)
   filter.setColumnFilterCriteria(prefectureColumnIndex, criteria)
 
-  return dataRange
+  return filter.getRange()
 }
 
 function splitMasterSheetByPrefecture(prefix='分割_'): GoogleAppsScript.Spreadsheet.Sheet[] {

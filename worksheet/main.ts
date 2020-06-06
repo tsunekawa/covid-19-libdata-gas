@@ -10,6 +10,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 */
 
+type Sheet = GoogleAppsScript.Spreadsheet.Sheet
+type Spreadsheet = GoogleAppsScript.Spreadsheet.Spreadsheet
+
 // 情報取得系関数
 
 function getSpreadsheet() {
@@ -35,28 +38,6 @@ function getHeaders() {
   let headers = sheet.getRange('1:1').getValues().flat().filter( (value) => value.length > 0 )
   
   return headers
-}
-
-function groupRowsByPrefecture(sheet) {
-  const PREFECTURE_LABEL = PropertiesService.getScriptProperties().getProperty('PREFECTURE_LABEL') || '都道府県'
-  
-  let data = sheet.getDataRange().getValues()
-  let headers = data.shift()
-  let prefectureColumnIndex = headers.indexOf(PREFECTURE_LABEL)
-  
-  let groups = data.map((rowValues) => {
-    return [rowValues[prefectureColumnIndex], rowValues]
-  }).reduce( (obj, entry) =>{
-    if (!Array.isArray(obj[entry[0]])) {
-      obj[entry[0]] = []
-    }
-    
-    obj[entry[0]].push(entry[1])
-    
-    return obj
-  }, {})
-  
-  return groups
 }
 
 // 更新系の関数
@@ -89,8 +70,8 @@ function createPrefectureSheet(name, rows) {
   return sheet
 }
 
-function copyPrefectureSheet(name: string, sourceRange: GoogleAppsScript.Spreadsheet.Range) {
-  let sheetName = "分割_" + name
+function copyPrefectureSheet(name: string, sourceRange: GoogleAppsScript.Spreadsheet.Range, prefix='分割_') {
+  let sheetName = prefix + name
   let spreadSheet = getSpreadsheet()
   let sheet: GoogleAppsScript.Spreadsheet.Sheet = spreadSheet.insertSheet(sheetName)
 
@@ -111,10 +92,10 @@ function filterSheetByPrefecture(dataRange: GoogleAppsScript.Spreadsheet.Range, 
   filter.removeColumnFilterCriteria(prefectureColumnIndex)
   filter.setColumnFilterCriteria(prefectureColumnIndex, criteria)
 
-  return dataRange
+  return filter.getRange()
 }
 
-function splitMasterSheetByPrefecture(): GoogleAppsScript.Spreadsheet.Sheet[] {
+function splitMasterSheetByPrefecture(prefix='分割_'): GoogleAppsScript.Spreadsheet.Sheet[] {
   const PREFECTURE_LABEL = PropertiesService.getScriptProperties().getProperty('PREFECTURE_LABEL') || '都道府県'
 
   let masterSheet = getMasterSheet()
@@ -127,10 +108,49 @@ function splitMasterSheetByPrefecture(): GoogleAppsScript.Spreadsheet.Sheet[] {
 
   let prefectureSheets = prefectureNames.map((prefectureName: string): GoogleAppsScript.Spreadsheet.Sheet => {
     let filteredRange = filterSheetByPrefecture(masterTable, prefectureName)
-    return copyPrefectureSheet(prefectureName, filteredRange)
+    return copyPrefectureSheet(prefectureName, filteredRange, prefix=prefix)
   })
 
   return prefectureSheets
+}
+
+function getSheetURL(sheet: Sheet): string {
+  let spreadsheetURL: string = sheet.getParent().getUrl()
+  let sheetId: string = sheet.getSheetId().toString()
+
+  return `${spreadsheetURL}#gid=${sheetId}`
+}
+
+function setupWorksheets(): Sheet {
+  const prefectureSheetPrefix = '分割_'
+  const spreadsheet: Spreadsheet = getSpreadsheet()
+  const prefectureSheets: Sheet[] = splitMasterSheetByPrefecture(prefectureSheetPrefix)
+  const headers = ['都道府県名', '件数', '調査済', '完了率', '調査完了日', '担当', 'メモ']
+  const headerColor = '#fff2cc'
+  const sheetName = '【分割シート一覧】'
+
+  let statusSheet = spreadsheet.insertSheet(sheetName, 0)
+
+  const data: string[][] = prefectureSheets.map((sheet, idx) => {
+    let sheetName = sheet.getSheetName().replace(prefectureSheetPrefix, '')
+    let sheetURL = getSheetURL(sheet)
+    let rowIndex = idx + 2
+
+    return [
+      `=HYPERLINK("${sheetURL}", "${sheetName}")`,
+      `=IFERROR(COUNTIF(INDIRECT(JOIN("", "${prefectureSheetPrefix}", $A${rowIndex}, "!E2:E")), "○"), "-")`,
+      `=IFERROR(COUNTIFS(INDIRECT(JOIN("", "${prefectureSheetPrefix}", $A${rowIndex}, "!E2:E")), "○", INDIRECT(JOIN("", "${prefectureSheetPrefix}", $A${rowIndex}, "!H2:H")), ">0"), "-")`,
+      `=IFERROR($C${rowIndex}/$B${rowIndex}, "-")`
+    ]
+  })
+
+  statusSheet.getRange(1, 1, 1, headers.length)
+    .setValues([headers])
+
+  statusSheet.getRange(2, 1, data.length, data[0].length)
+    .setFormulas(data)
+  
+  return  statusSheet
 }
 
 function getPartSheets() {
